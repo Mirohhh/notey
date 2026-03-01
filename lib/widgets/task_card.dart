@@ -62,14 +62,16 @@ class TaskCard extends StatelessWidget {
           ),
         );
       },
-      onDismissed: (_) {
-        context.read<TaskProvider>().deleteTask(task.id);
-        ScaffoldMessenger.of(context).showSnackBar(
+      onDismissed: (_) async {
+        // Show snackbar immediately — deletion is already optimistic in provider
+        final messenger = ScaffoldMessenger.of(context);
+        await context.read<TaskProvider>().deleteTask(task.id);
+        messenger.showSnackBar(
           SnackBar(
             content: Text('${task.title} deleted'),
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
           ),
         );
       },
@@ -106,7 +108,8 @@ class TaskCard extends StatelessWidget {
                     height: 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isDone ? colorScheme.primary : Colors.transparent,
+                      color:
+                          isDone ? colorScheme.primary : Colors.transparent,
                       border: Border.all(
                         color: isDone
                             ? colorScheme.primary
@@ -131,8 +134,9 @@ class TaskCard extends StatelessWidget {
                         style: theme.textTheme.titleMedium?.copyWith(
                           decoration:
                               isDone ? TextDecoration.lineThrough : null,
-                          color:
-                              isDone ? theme.textTheme.bodySmall?.color : null,
+                          color: isDone
+                              ? theme.textTheme.bodySmall?.color
+                              : null,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -171,8 +175,8 @@ class TaskCard extends StatelessWidget {
                           if (task.startTime != null) ...[
                             _TimeBadge(
                               icon: Icons.play_circle_outline_rounded,
-                              label:
-                                  DateFormat('h:mm a').format(task.startTime!),
+                              label: DateFormat('h:mm a')
+                                  .format(task.startTime!),
                               color: colorScheme.primary,
                             ),
                             const SizedBox(width: 8),
@@ -201,7 +205,7 @@ class TaskCard extends StatelessWidget {
   }
 
   String _deadlineLabel() {
-    if (task.deadline == null) return 'No Deadline';
+    if (task.deadline == null) return '';
     final now = DateTime.now();
     final diff = task.deadline!.difference(now);
     if (diff.isNegative) return 'Overdue';
@@ -223,6 +227,9 @@ class TaskCard extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
+      isDismissible: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => TaskFormSheet(
         selectedDay: selectedDay,

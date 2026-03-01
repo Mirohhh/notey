@@ -67,7 +67,8 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
       initialTime: TimeOfDay.now(),
     );
     if (time == null || !mounted) return;
-    final dt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final dt =
+        DateTime(date.year, date.month, date.day, time.hour, time.minute);
     setState(() {
       if (isStart) {
         _startTime = dt;
@@ -84,38 +85,59 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
       );
       return;
     }
+
     setState(() => _isLoading = true);
+
+    // Snapshot everything before any await
+    final navigator = Navigator.of(context);
     final provider = context.read<TaskProvider>();
+    final title = _titleController.text.trim();
+    final description = _descController.text.trim();
+    final selectedDay = widget.selectedDay;
+    final startTime = _startTime;
+    final deadline = _deadline;
+    final priority = _priority;
+    final category = _category;
+    final notifyOnStart = _notifyOnStart;
+    final notifyBeforeDeadline = _notifyBeforeDeadline;
+    final notifyMinutesBefore = _notifyMinutesBefore;
+    final existingTask = widget.existingTask;
 
-    if (widget.existingTask != null) {
-      await provider.updateTask(widget.existingTask!.copyWith(
-        title: _titleController.text.trim(),
-        description: _descController.text.trim(),
-        date: widget.selectedDay,
-        startTime: _startTime,
-        deadline: _deadline,
-        priority: _priority,
-        category: _category,
-        notifyOnStart: _notifyOnStart,
-        notifyBeforeDeadline: _notifyBeforeDeadline,
-        notifyMinutesBefore: _notifyMinutesBefore,
-      ));
-    } else {
-      await provider.addTask(
-        title: _titleController.text.trim(),
-        description: _descController.text.trim(),
-        date: widget.selectedDay,
-        startTime: _startTime,
-        deadline: _deadline,
-        priority: _priority,
-        category: _category,
-        notifyOnStart: _notifyOnStart,
-        notifyBeforeDeadline: _notifyBeforeDeadline,
-        notifyMinutesBefore: _notifyMinutesBefore,
-      );
+    // Close the sheet immediately — don't wait for DB
+    navigator.pop();
+
+    // Do the work after the sheet is gone
+    try {
+      if (existingTask != null) {
+        await provider.updateTask(existingTask.copyWith(
+          title: title,
+          description: description,
+          date: selectedDay,
+          startTime: startTime,
+          deadline: deadline,
+          priority: priority,
+          category: category,
+          notifyOnStart: notifyOnStart,
+          notifyBeforeDeadline: notifyBeforeDeadline,
+          notifyMinutesBefore: notifyMinutesBefore,
+        ));
+      } else {
+        await provider.addTask(
+          title: title,
+          description: description,
+          date: selectedDay,
+          startTime: startTime,
+          deadline: deadline,
+          priority: priority,
+          category: category,
+          notifyOnStart: notifyOnStart,
+          notifyBeforeDeadline: notifyBeforeDeadline,
+          notifyMinutesBefore: notifyMinutesBefore,
+        );
+      }
+    } catch (e) {
+      debugPrint('Failed to save task: $e');
     }
-
-    if (mounted) Navigator.pop(context);
   }
 
   @override
@@ -124,23 +146,29 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
     final colorScheme = theme.colorScheme;
     final isEditing = widget.existingTask != null;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      snap: true,
+      snapSizes: const [0.75, 0.95],
+      builder: (_, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        ),
+        child: ListView(
+          controller: scrollController,
           children: [
-            // Handle
+            // Drag handle
             Center(
               child: Container(
                 width: 40,
@@ -183,10 +211,13 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
             const SizedBox(height: 20),
 
             // Priority
-            Text('Priority', style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            )),
+            Text(
+              'Priority',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 8),
             Row(
               children: TaskPriority.values.map((p) {
@@ -207,17 +238,16 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                               : colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: selected ? colors[p.index] : Colors.transparent,
+                            color: selected
+                                ? colors[p.index]
+                                : Colors.transparent,
                             width: 2,
                           ),
                         ),
                         child: Column(
                           children: [
-                            Icon(
-                              Icons.circle,
-                              size: 10,
-                              color: colors[p.index],
-                            ),
+                            Icon(Icons.circle,
+                                size: 10, color: colors[p.index]),
                             const SizedBox(height: 4),
                             Text(
                               labels[p.index],
@@ -240,10 +270,13 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
             const SizedBox(height: 20),
 
             // Category
-            Text('Category', style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            )),
+            Text(
+              'Category',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -271,7 +304,8 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(c.emoji, style: const TextStyle(fontSize: 14)),
+                        Text(c.emoji,
+                            style: const TextStyle(fontSize: 14)),
                         const SizedBox(width: 6),
                         Text(
                           c.label,
@@ -320,10 +354,13 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
             const SizedBox(height: 20),
 
             // Notifications
-            Text('Notifications', style: theme.textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            )),
+            Text(
+              'Notifications',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
             const SizedBox(height: 8),
             _NotifTile(
               label: 'Notify when task starts',
@@ -359,7 +396,8 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                     onChanged: (v) =>
                         setState(() => _notifyMinutesBefore = v ?? 30),
                   ),
-                  Text(' before deadline', style: theme.textTheme.bodyMedium),
+                  Text(' before deadline',
+                      style: theme.textTheme.bodyMedium),
                 ],
               ),
             ],
@@ -376,17 +414,11 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        isEditing ? 'Update Task' : 'Add Task',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700, fontSize: 16),
-                      ),
+                child: Text(
+                  isEditing ? 'Update Task' : 'Add Task',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 16),
+                ),
               ),
             ),
           ],
@@ -420,9 +452,12 @@ class _TimePickerButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: hasTime ? color.withOpacity(0.08) : theme.inputDecorationTheme.fillColor,
+          color: hasTime
+              ? color.withOpacity(0.08)
+              : theme.inputDecorationTheme.fillColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: hasTime ? color.withOpacity(0.4) : Colors.transparent,
@@ -430,20 +465,27 @@ class _TimePickerButton extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 18, color: hasTime ? color : theme.iconTheme.color),
+            Icon(icon,
+                size: 18,
+                color: hasTime ? color : theme.iconTheme.color),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 10)),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(fontSize: 10)),
                   Text(
-                    hasTime ? DateFormat('MMM d, h:mm a').format(time!) : 'Set',
+                    hasTime
+                        ? DateFormat('MMM d, h:mm a').format(time!)
+                        : 'Set',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
-                      color: hasTime ? color : theme.textTheme.bodySmall?.color,
+                      color: hasTime
+                          ? color
+                          : theme.textTheme.bodySmall?.color,
                     ),
                   ),
                 ],
@@ -474,14 +516,12 @@ class _NotifTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       children: [
-        Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
-        Switch.adaptive(
-          value: value,
-          onChanged: onChanged,
-        ),
+        Expanded(
+            child: Text(label,
+                style: Theme.of(context).textTheme.bodyMedium)),
+        Switch.adaptive(value: value, onChanged: onChanged),
       ],
     );
   }

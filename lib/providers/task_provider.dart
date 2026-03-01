@@ -9,11 +9,9 @@ class TaskProvider extends ChangeNotifier {
   final NotificationService _notifications = NotificationService();
   final _uuid = const Uuid();
 
-  // In-memory cache for the currently selected day
   List<Task> _dayTasks = [];
   List<Task> get dayTasks => _dayTasks;
 
-  // Calendar dot counts — loaded per month
   Map<DateTime, int> _monthCounts = {};
   Map<DateTime, int> get monthCounts => _monthCounts;
 
@@ -21,6 +19,9 @@ class TaskProvider extends ChangeNotifier {
   TaskCategory? get activeFilter => _activeFilter;
 
   DateTime? _loadedDay;
+
+  // IDs currently being deleted — filtered out of any loadDay result
+  final Set<String> _pendingDeletes = {};
 
   // ── FILTER ──────────────────────────────────────────────────────────────────
 
@@ -32,14 +33,16 @@ class TaskProvider extends ChangeNotifier {
 
   // ── LOAD ────────────────────────────────────────────────────────────────────
 
-  /// Call when the user taps a day on the calendar.
   Future<void> loadDay(DateTime day) async {
     _loadedDay = day;
-    _dayTasks = await _db.getTasksForDay(day, category: _activeFilter);
+    final tasks = await _db.getTasksForDay(day, category: _activeFilter);
+    // Strip any tasks that are mid-delete so they never reappear
+    _dayTasks = tasks
+        .where((t) => !_pendingDeletes.contains(t.id))
+        .toList();
     notifyListeners();
   }
 
-  /// Call when the calendar page changes months.
   Future<void> loadMonthCounts(int year, int month) async {
     _monthCounts = await _db.getTaskCountsByMonth(year, month);
     notifyListeners();
@@ -73,50 +76,93 @@ class TaskProvider extends ChangeNotifier {
       notifyMinutesBefore: notifyMinutesBefore,
     );
 
+    // Optimistic — add to UI immediately if it belongs to the current day view
+    final visibleNow = _loadedDay != null &&
+        _isSameDay(date, _loadedDay!) &&
+        (_activeFilter == null || _activeFilter == category);
+
+    if (visibleNow) {
+      _dayTasks = [..._dayTasks, task];
+      _incrementCount(date);
+      notifyListeners();
+    }
+
     await _db.insertTask(task);
     await _notifications.scheduleTaskNotifications(task);
-    await _refreshAfterChange(date);
+
+    // Re-sync to get correct DB sort order
+    if (visibleNow && _loadedDay != null) await loadDay(_loadedDay!);
+    await loadMonthCounts(date.year, date.month);
   }
 
   // ── UPDATE ──────────────────────────────────────────────────────────────────
 
   Future<void> updateTask(Task task) async {
+    // Optimistic update in place
+    final idx = _dayTasks.indexWhere((t) => t.id == task.id);
+    if (idx != -1) {
+      _dayTasks = List.of(_dayTasks)..[idx] = task;
+      notifyListeners();
+    }
+
     await _db.updateTask(task);
     await _notifications.scheduleTaskNotifications(task);
-    await _refreshAfterChange(task.date);
+
+    if (_loadedDay != null) await loadDay(_loadedDay!);
+    await loadMonthCounts(task.date.year, task.date.month);
   }
 
   Future<void> toggleTaskStatus(String id) async {
-    final task = _dayTasks.firstWhere((t) => t.id == id);
+    final idx = _dayTasks.indexWhere((t) => t.id == id);
+    if (idx == -1) return;
+    final task = _dayTasks[idx];
     final updated = task.copyWith(
       status: task.status == TaskStatus.completed
           ? TaskStatus.pending
           : TaskStatus.completed,
     );
+    _dayTasks = List.of(_dayTasks)..[idx] = updated;
+    notifyListeners();
     await _db.updateTask(updated);
-    // Update in-memory list directly for instant UI response
-    final idx = _dayTasks.indexWhere((t) => t.id == id);
-    if (idx != -1) {
-      _dayTasks[idx] = updated;
-      notifyListeners();
-    }
   }
 
   // ── DELETE ──────────────────────────────────────────────────────────────────
 
   Future<void> deleteTask(String id) async {
     final task = _dayTasks.firstWhere((t) => t.id == id);
+
+    // Mark as pending-delete so loadDay never re-introduces it
+    _pendingDeletes.add(id);
+
+    // Optimistic removal
+    _dayTasks = _dayTasks.where((t) => t.id != id).toList();
+    _decrementCount(task.date);
+    notifyListeners();
+
     await _notifications.cancelTaskNotifications(id);
     await _db.deleteTask(id);
-    await _refreshAfterChange(task.date);
+
+    // Safe to remove from pending set now that DB confirms deletion
+    _pendingDeletes.remove(id);
+
+    await loadMonthCounts(task.date.year, task.date.month);
   }
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────
 
-  Future<void> _refreshAfterChange(DateTime date) async {
-    // Refresh the day list if we're still on the same day
-    if (_loadedDay != null) await loadDay(_loadedDay!);
-    // Refresh month counts so calendar dots stay accurate
-    await loadMonthCounts(date.year, date.month);
+  bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  void _incrementCount(DateTime date) {
+    final key = DateTime(date.year, date.month, date.day);
+    _monthCounts = Map.of(_monthCounts)
+      ..[key] = (_monthCounts[key] ?? 0) + 1;
+  }
+
+  void _decrementCount(DateTime date) {
+    final key = DateTime(date.year, date.month, date.day);
+    final current = _monthCounts[key] ?? 0;
+    _monthCounts = Map.of(_monthCounts)
+      ..[key] = (current - 1).clamp(0, 999);
   }
 }

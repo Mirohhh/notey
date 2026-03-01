@@ -135,8 +135,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
-                markerDecoration: BoxDecoration(
-                  color: colorScheme.primary,
+                markerDecoration: const BoxDecoration(
+                  color: Color.fromARGB(255, 218, 0, 62),
                   shape: BoxShape.circle,
                 ),
                 weekendTextStyle:
@@ -185,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 40,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 _FilterChip(
                   label: 'All',
@@ -271,6 +271,9 @@ class _HomeScreenState extends State<HomeScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      enableDrag: true,
+      isDismissible: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => TaskFormSheet(selectedDay: _selectedDay),
     );
