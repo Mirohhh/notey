@@ -1,4 +1,4 @@
-# Focus — Task Organizer App
+# notey — Task Management App
 
 A sleek, minimal Flutter task organizer with calendar, deadlines, and smart notifications.
 
@@ -117,15 +117,3 @@ Add to `ios/Runner/Info.plist`:
 **Font hierarchy**: w700 titles → w600 labels → w400 body  
 **Corner radius**: 16px cards, 12px inputs, 20px sheets  
 **Light bg**: `#F8F8FC` | **Dark bg**: `#0F0F1A`
-
----
-
-## Extending the App
-
-Ideas for future enhancements:
-- Recurring tasks (daily, weekly)
-- Task categories/tags with color filters
-- Weekly/daily summary view
-- Cloud sync (Firebase)
-- Widget for home screen
-- Search & filter tasks
