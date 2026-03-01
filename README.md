@@ -2,6 +2,8 @@
 
 A sleek, minimal Flutter task organizer with calendar, deadlines, and smart notifications.
 
+<img width="1920" height="1080" alt="New Project (2)" src="https://github.com/user-attachments/assets/06323d3d-f879-4aa2-bcf9-2ac59e4ef2f4" />
+
 
 ## Features
 
