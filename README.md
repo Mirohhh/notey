@@ -2,7 +2,6 @@
 
 A sleek, minimal Flutter task organizer with calendar, deadlines, and smart notifications.
 
----
 
 ## Features
 
@@ -14,7 +13,6 @@ A sleek, minimal Flutter task organizer with calendar, deadlines, and smart noti
 - 🏷 **Priority Levels** — Low, Medium, High with color-coded visual indicators
 - 📱 **Minimal Design** — Clean cards, smooth animations, no visual clutter
 
----
 
 ## Project Structure
 
@@ -35,7 +33,6 @@ lib/
     └── task_form_sheet.dart      # Bottom sheet for add/edit task
 ```
 
----
 
 ## Setup & Installation
 
@@ -69,7 +66,6 @@ Add to `ios/Runner/Info.plist`:
 </array>
 ```
 
----
 
 ## Dependencies
 
@@ -83,7 +79,6 @@ Add to `ios/Runner/Info.plist`:
 | `intl` | Date formatting |
 | `uuid` | Unique task IDs |
 
----
 
 ## How It Works
 
@@ -109,7 +104,6 @@ Add to `ios/Runner/Info.plist`:
 - A small dot appears under any day that has tasks
 - Tap any day to see its tasks listed below
 
----
 
 ## Design System
 
