@@ -41,7 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Focus'),
+        title: const Text('notey',
+            style: TextStyle(
+                fontFamily: 'noto', fontWeight: FontWeight.w600, fontSize: 26)),
         actions: [
           TextButton(
             onPressed: () {
