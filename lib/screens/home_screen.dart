@@ -43,7 +43,10 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('notey',
             style: TextStyle(
-                fontFamily: 'noto', fontWeight: FontWeight.w600, fontSize: 26)),
+                fontFamily: 'NotoSans',
+                // fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w600,
+                fontSize: 26)),
         actions: [
           TextButton(
             onPressed: () {

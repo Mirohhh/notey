@@ -1,5 +1,4 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:hive/hive.dart';
 import '../models/task.dart';
 
 class DatabaseService {
@@ -7,79 +6,30 @@ class DatabaseService {
   factory DatabaseService() => _instance;
   DatabaseService._internal();
 
-  Database? _db;
+  static const _boxName = 'tasks';
+  late Box<Map> _box;
 
-  Future<Database> get database async {
-    _db ??= await _initDatabase();
-    return _db!;
-  }
-
-  Future<Database> _initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'focus_tasks.db');
-
-    return openDatabase(
-      path,
-      version: 1,
-      onCreate: _onCreate,
-    );
-  }
-
-  Future<void> _onCreate(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE tasks (
-        id                      TEXT PRIMARY KEY,
-        title                   TEXT NOT NULL,
-        description             TEXT DEFAULT '',
-        date                    TEXT NOT NULL,
-        start_time              TEXT,
-        deadline                TEXT,
-        priority                INTEGER DEFAULT 1,
-        status                  INTEGER DEFAULT 0,
-        category                INTEGER DEFAULT 6,
-        notify_on_start         INTEGER DEFAULT 1,
-        notify_before_deadline  INTEGER DEFAULT 1,
-        notify_minutes_before   INTEGER DEFAULT 30
-      )
-    ''');
-
-    // Index on date for fast day lookups
-    await db.execute(
-        'CREATE INDEX idx_tasks_date ON tasks (date)');
-
-    // Index on category for fast filter queries
-    await db.execute(
-        'CREATE INDEX idx_tasks_category ON tasks (category)');
+  /// Call once before using any other method.
+  Future<void> init() async {
+    _box = await Hive.openBox<Map>(_boxName);
   }
 
   // ── INSERT ──────────────────────────────────────────────────────────────────
 
   Future<void> insertTask(Task task) async {
-    final db = await database;
-    await db.insert(
-      'tasks',
-      _toMap(task),
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _box.put(task.id, task.toJson());
   }
 
   // ── UPDATE ──────────────────────────────────────────────────────────────────
 
   Future<void> updateTask(Task task) async {
-    final db = await database;
-    await db.update(
-      'tasks',
-      _toMap(task),
-      where: 'id = ?',
-      whereArgs: [task.id],
-    );
+    await _box.put(task.id, task.toJson());
   }
 
   // ── DELETE ──────────────────────────────────────────────────────────────────
 
   Future<void> deleteTask(String id) async {
-    final db = await database;
-    await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
+    await _box.delete(id);
   }
 
   // ── QUERIES ─────────────────────────────────────────────────────────────────
@@ -89,100 +39,58 @@ class DatabaseService {
     DateTime day, {
     TaskCategory? category,
   }) async {
-    final db = await database;
     final dayKey = _dateKey(day);
 
-    final where = category != null
-        ? 'date = ? AND category = ?'
-        : 'date = ?';
-    final args = category != null
-        ? [dayKey, category.index]
-        : [dayKey];
+    final tasks = _box.values
+        .map((raw) => Task.fromJson(Map<String, dynamic>.from(raw)))
+        .where((t) {
+      if (_dateKey(t.date) != dayKey) return false;
+      if (category != null && t.category != category) return false;
+      return true;
+    }).toList();
 
-    final rows = await db.query(
-      'tasks',
-      where: where,
-      whereArgs: args,
-      orderBy: 'start_time ASC',
-    );
+    // Sort by start time (nulls last)
+    tasks.sort((a, b) {
+      if (a.startTime == null && b.startTime == null) return 0;
+      if (a.startTime == null) return 1;
+      if (b.startTime == null) return -1;
+      return a.startTime!.compareTo(b.startTime!);
+    });
 
-    return rows.map(_fromMap).toList();
+    return tasks;
   }
 
   /// Returns a map of date → task count for calendar dot indicators.
-  /// Much cheaper than loading every task.
   Future<Map<DateTime, int>> getTaskCountsByMonth(
     int year,
     int month,
   ) async {
-    final db = await database;
-    // e.g. "2025-03-%"
-    final pattern =
-        '${year.toString().padLeft(4, '0')}-${month.toString().padLeft(2, '0')}-%';
+    final counts = <DateTime, int>{};
 
-    final rows = await db.rawQuery(
-      'SELECT date, COUNT(*) as cnt FROM tasks WHERE date LIKE ? GROUP BY date',
-      [pattern],
-    );
-
-    final map = <DateTime, int>{};
-    for (final row in rows) {
-      final parts = (row['date'] as String).split('-');
-      final dt = DateTime(
-        int.parse(parts[0]),
-        int.parse(parts[1]),
-        int.parse(parts[2]),
-      );
-      map[dt] = (row['cnt'] as int);
+    for (final raw in _box.values) {
+      final map = Map<String, dynamic>.from(raw);
+      final dateStr = map['date'] as String?;
+      if (dateStr == null) continue;
+      final dt = DateTime.parse(dateStr);
+      if (dt.year == year && dt.month == month) {
+        final key = DateTime(dt.year, dt.month, dt.day);
+        counts[key] = (counts[key] ?? 0) + 1;
+      }
     }
-    return map;
+
+    return counts;
   }
 
   /// All tasks — used for notification rescheduling on boot.
   Future<List<Task>> getAllTasks() async {
-    final db = await database;
-    final rows = await db.query('tasks');
-    return rows.map(_fromMap).toList();
+    return _box.values
+        .map((raw) => Task.fromJson(Map<String, dynamic>.from(raw)))
+        .toList();
   }
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────
 
-  String _dateKey(DateTime dt) =>
-      '${dt.year.toString().padLeft(4, '0')}-'
+  String _dateKey(DateTime dt) => '${dt.year.toString().padLeft(4, '0')}-'
       '${dt.month.toString().padLeft(2, '0')}-'
       '${dt.day.toString().padLeft(2, '0')}';
-
-  Map<String, dynamic> _toMap(Task t) => {
-        'id': t.id,
-        'title': t.title,
-        'description': t.description,
-        'date': _dateKey(t.date),
-        'start_time': t.startTime?.toIso8601String(),
-        'deadline': t.deadline?.toIso8601String(),
-        'priority': t.priority.index,
-        'status': t.status.index,
-        'category': t.category.index,
-        'notify_on_start': t.notifyOnStart ? 1 : 0,
-        'notify_before_deadline': t.notifyBeforeDeadline ? 1 : 0,
-        'notify_minutes_before': t.notifyMinutesBefore,
-      };
-
-  Task _fromMap(Map<String, dynamic> m) => Task(
-        id: m['id'] as String,
-        title: m['title'] as String,
-        description: m['description'] as String? ?? '',
-        date: DateTime.parse(m['date'] as String),
-        startTime: m['start_time'] != null
-            ? DateTime.parse(m['start_time'] as String)
-            : null,
-        deadline: m['deadline'] != null
-            ? DateTime.parse(m['deadline'] as String)
-            : null,
-        priority: TaskPriority.values[m['priority'] as int],
-        status: TaskStatus.values[m['status'] as int],
-        category: TaskCategory.values[m['category'] as int],
-        notifyOnStart: (m['notify_on_start'] as int) == 1,
-        notifyBeforeDeadline: (m['notify_before_deadline'] as int) == 1,
-        notifyMinutesBefore: m['notify_minutes_before'] as int,
-      );
 }
