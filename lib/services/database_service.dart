@@ -30,6 +30,8 @@ class DatabaseService {
 
   Future<void> deleteTask(String id) async {
     await _box.delete(id);
+    await _box.flush();
+    await _box.compact();
   }
 
   // ── QUERIES ─────────────────────────────────────────────────────────────────
