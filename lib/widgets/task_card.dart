@@ -63,17 +63,31 @@ class TaskCard extends StatelessWidget {
         );
       },
       onDismissed: (_) async {
-        // Show snackbar immediately — deletion is already optimistic in provider
         final messenger = ScaffoldMessenger.of(context);
-        await context.read<TaskProvider>().deleteTask(task.id);
+        final provider = context.read<TaskProvider>();
+        final deletedTask = task; // Capture current task for SnackBar/Undo
+
+        // Show snackbar immediately with Undo action
         messenger.showSnackBar(
           SnackBar(
-            content: Text('${task.title} deleted'),
+            content: Text('${deletedTask.title} deleted'),
             behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () => provider.undoDelete(deletedTask),
+            ),
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10)),
           ),
         );
+
+        try {
+          await provider.deleteTask(deletedTask.id);
+        } catch (e) {
+          messenger.showSnackBar(
+            SnackBar(content: Text('Failed to delete ${deletedTask.title}')),
+          );
+        }
       },
       child: GestureDetector(
         onTap: () => _showEditSheet(context),
@@ -220,7 +234,8 @@ class TaskCard extends StatelessWidget {
     final diff = task.deadline!.difference(now);
     if (diff.isNegative) return Colors.red;
     if (diff.inHours < 2) return Colors.orange;
-    return Colors.red.withValues(alpha: 0.7);
+    // Distant deadlines should not be red
+    return Colors.green.withValues(alpha: 0.7);
   }
 
   void _showEditSheet(BuildContext context) {

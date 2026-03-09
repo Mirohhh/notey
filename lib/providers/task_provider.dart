@@ -135,27 +135,51 @@ class TaskProvider extends ChangeNotifier {
   // ── DELETE ──────────────────────────────────────────────────────────────────
 
   Future<void> deleteTask(String id) async {
-    final task = _dayTasks.firstWhere((t) => t.id == id);
+    final idx = _dayTasks.indexWhere((t) => t.id == id);
+    if (idx == -1) return;
+
+    final task = _dayTasks[idx];
 
     // Mark as pending-delete so loadDay never re-introduces it
     _pendingDeletes.add(id);
 
     // Optimistic removal
-    _dayTasks = _dayTasks.where((t) => t.id != id).toList();
+    _dayTasks = List.from(_dayTasks)..removeAt(idx);
     _decrementCount(task.date);
     notifyListeners();
 
-    await _notifications.cancelTaskNotifications(id);
-    await _db.deleteTask(id);
-
-    // Safe to remove from pending set now that DB confirms deletion
-    _pendingDeletes.remove(id);
+    try {
+      await _notifications.cancelTaskNotifications(id);
+      await _db.deleteTask(id);
+    } catch (e) {
+      debugPrint('Failed to delete task: $e');
+      // ROLLBACK: Re-insert if DB fails
+      if (_loadedDay != null && _isSameDay(task.date, _loadedDay!)) {
+        _dayTasks = List.from(_dayTasks)..insert(idx.clamp(0, _dayTasks.length), task);
+        _incrementCount(task.date);
+        notifyListeners();
+      }
+      rethrow;
+    } finally {
+      _pendingDeletes.remove(id);
+    }
 
     await loadMonthCounts(task.date.year, task.date.month);
-    
+
     if (_isSameDay(task.date, DateTime.now())) {
       _updateWidgetData();
     }
+  }
+
+  Future<void> undoDelete(Task task) async {
+    _pendingDeletes.remove(task.id);
+    await _db.insertTask(task);
+    await _notifications.scheduleTaskNotifications(task);
+
+    if (_loadedDay != null && _isSameDay(task.date, _loadedDay!)) {
+      await loadDay(_loadedDay!);
+    }
+    await loadMonthCounts(task.date.year, task.date.month);
   }
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────
