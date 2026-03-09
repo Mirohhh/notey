@@ -36,7 +36,7 @@ class TaskCard extends StatelessWidget {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.15),
+          color: Colors.red.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(Icons.delete_outline_rounded, color: Colors.red),
@@ -87,7 +87,7 @@ class TaskCard extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: priorityColor.withOpacity(0.05),
+                color: priorityColor.withValues(alpha: 0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -113,7 +113,7 @@ class TaskCard extends StatelessWidget {
                       border: Border.all(
                         color: isDone
                             ? colorScheme.primary
-                            : colorScheme.onSurface.withOpacity(0.3),
+                            : colorScheme.onSurface.withValues(alpha: 0.3),
                         width: 2,
                       ),
                     ),
@@ -146,7 +146,7 @@ class TaskCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              color: colorScheme.primary.withOpacity(0.08),
+                              color: colorScheme.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -195,7 +195,7 @@ class TaskCard extends StatelessWidget {
                 ),
                 // Edit icon
                 Icon(Icons.chevron_right_rounded,
-                    color: colorScheme.onSurface.withOpacity(0.3)),
+                    color: colorScheme.onSurface.withValues(alpha: 0.3)),
               ],
             ),
           ),
@@ -220,7 +220,7 @@ class TaskCard extends StatelessWidget {
     final diff = task.deadline!.difference(now);
     if (diff.isNegative) return Colors.red;
     if (diff.inHours < 2) return Colors.orange;
-    return Colors.red.withOpacity(0.7);
+    return Colors.red.withValues(alpha: 0.7);
   }
 
   void _showEditSheet(BuildContext context) {
@@ -255,7 +255,7 @@ class _TimeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

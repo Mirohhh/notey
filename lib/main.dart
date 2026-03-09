@@ -6,12 +6,17 @@ import 'providers/theme_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
+import 'package:home_widget/home_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await DatabaseService().init();
   await NotificationService().initialize();
+  
+  // Set group ID so the iOS app and widget share data (even though we focus on Android now, it's good practice)
+  await HomeWidget.setAppGroupId('group.com.example.flutter_application_2');
+  
   runApp(const TaskOrganizerApp());
 }
 

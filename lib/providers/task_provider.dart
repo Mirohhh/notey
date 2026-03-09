@@ -3,6 +3,8 @@ import 'package:uuid/uuid.dart';
 import '../models/task.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:intl/intl.dart';
 
 class TaskProvider extends ChangeNotifier {
   final DatabaseService _db = DatabaseService();
@@ -41,6 +43,10 @@ class TaskProvider extends ChangeNotifier {
         .where((t) => !_pendingDeletes.contains(t.id))
         .toList();
     notifyListeners();
+
+    if (_isSameDay(day, DateTime.now())) {
+      _updateWidgetData();
+    }
   }
 
   Future<void> loadMonthCounts(int year, int month) async {
@@ -146,6 +152,10 @@ class TaskProvider extends ChangeNotifier {
     _pendingDeletes.remove(id);
 
     await loadMonthCounts(task.date.year, task.date.month);
+    
+    if (_isSameDay(task.date, DateTime.now())) {
+      _updateWidgetData();
+    }
   }
 
   // ── HELPERS ─────────────────────────────────────────────────────────────────
@@ -164,5 +174,34 @@ class TaskProvider extends ChangeNotifier {
     final current = _monthCounts[key] ?? 0;
     _monthCounts = Map.of(_monthCounts)
       ..[key] = (current - 1).clamp(0, 999);
+  }
+
+  // ── WIDGET ──────────────────────────────────────────────────────────────────
+  
+  Future<void> _updateWidgetData() async {
+    final now = DateTime.now();
+    final todayTasks = await _db.getTasksForDay(now);
+    
+    final pendingTasks = todayTasks.where((t) => t.status != TaskStatus.completed).toList();
+    
+    String widgetText;
+    if (pendingTasks.isEmpty) {
+      widgetText = "No tasks left for today ✨";
+    } else {
+      widgetText = pendingTasks.map((t) {
+        String base = "• ${t.title} ${t.category.emoji}";
+        if (t.deadline != null) {
+          final timeStr = DateFormat('h:mm a').format(t.deadline!);
+          base += " (Due: $timeStr)";
+        }
+        return base;
+      }).join("\n");
+    }
+
+    await HomeWidget.saveWidgetData<String>('tasks_data', widgetText);
+    await HomeWidget.updateWidget(
+      name: 'TaskWidgetProvider',
+      iOSName: 'TaskWidget',
+    );
   }
 }

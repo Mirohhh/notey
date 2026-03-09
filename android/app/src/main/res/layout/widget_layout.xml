@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#2E3036"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Title -->
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Today's Tasks"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp" />
+
+    <!-- List of Tasks (using a simple string representation for V1) -->
+    <TextView
+        android:id="@+id/widget_tasks_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No tasks for today ✨"
+        android:textColor="#c4c7ccff"
+        android:textSize="16sp"
+        android:maxLines="10"
+        android:ellipsize="end" />
+
+</LinearLayout>
