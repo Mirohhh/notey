@@ -11,7 +11,7 @@
     <application
         android:label="notey"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/notey_launch"
         android:enableOnBackInvokedCallback="true">
 
         <activity
