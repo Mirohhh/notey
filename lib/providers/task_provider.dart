@@ -7,9 +7,13 @@ import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 
 class TaskProvider extends ChangeNotifier {
-  final DatabaseService _db = DatabaseService();
-  final NotificationService _notifications = NotificationService();
+  final DatabaseService _db;
+  final NotificationService _notifications;
   final _uuid = const Uuid();
+
+  TaskProvider({DatabaseService? db, NotificationService? notifications})
+      : _db = db ?? DatabaseService(),
+        _notifications = notifications ?? NotificationService();
 
   List<Task> _dayTasks = [];
   List<Task> get dayTasks => _dayTasks;
