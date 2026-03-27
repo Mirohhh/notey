@@ -113,3 +113,6 @@ Add to `ios/Runner/Info.plist`:
 **Font hierarchy**: w700 titles → w600 labels → w400 body  
 **Corner radius**: 16px cards, 12px inputs, 20px sheets  
 **Light bg**: `#F8F8FC` | **Dark bg**: `#0F0F1A`
+
+---
+2026 © Mirohhh/Omar Shabana
