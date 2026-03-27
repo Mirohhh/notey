@@ -5,14 +5,58 @@ import '../models/task.dart';
 import '../providers/task_provider.dart';
 import 'task_form_sheet.dart';
 
-class TaskCard extends StatelessWidget {
+class TaskCard extends StatefulWidget {
   final Task task;
   final DateTime selectedDay;
 
   const TaskCard({super.key, required this.task, required this.selectedDay});
 
+  @override
+  State<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends State<TaskCard> {
+  late TaskPriority _priority;
+  late TaskStatus _status;
+  late String _title;
+  late String _description;
+  late TaskCategory _category;
+  late DateTime? _startTime;
+  late DateTime? _deadline;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateFromTask();
+  }
+
+  @override
+  void didUpdateWidget(TaskCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.task.id != widget.task.id ||
+        oldWidget.task.title != widget.task.title ||
+        oldWidget.task.description != widget.task.description ||
+        oldWidget.task.status != widget.task.status ||
+        oldWidget.task.priority != widget.task.priority ||
+        oldWidget.task.category != widget.task.category ||
+        oldWidget.task.startTime != widget.task.startTime ||
+        oldWidget.task.deadline != widget.task.deadline) {
+      _updateFromTask();
+    }
+  }
+
+  void _updateFromTask() {
+    _priority = widget.task.priority;
+    _status = widget.task.status;
+    _title = widget.task.title;
+    _description = widget.task.description;
+    _category = widget.task.category;
+    _startTime = widget.task.startTime;
+    _deadline = widget.task.deadline;
+  }
+
   Color _priorityColor() {
-    switch (task.priority) {
+    switch (_priority) {
       case TaskPriority.high:
         return Colors.red;
       case TaskPriority.medium:
@@ -26,11 +70,11 @@ class TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDone = task.status == TaskStatus.completed;
+    final isDone = _status == TaskStatus.completed;
     final priorityColor = _priorityColor();
 
     return Dismissible(
-      key: Key(task.id),
+      key: Key(widget.task.id),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
@@ -48,7 +92,7 @@ class TaskCard extends StatelessWidget {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: const Text('Delete Task'),
-            content: Text('Delete "${task.title}"?'),
+            content: Text('Delete "$_title"?'),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
@@ -65,12 +109,11 @@ class TaskCard extends StatelessWidget {
       onDismissed: (_) async {
         final messenger = ScaffoldMessenger.of(context);
         final provider = context.read<TaskProvider>();
-        final deletedTask = task; // Capture current task for SnackBar/Undo
+        final deletedTask = widget.task;
 
-        // Show snackbar immediately with Undo action
         messenger.showSnackBar(
           SnackBar(
-            content: Text('${deletedTask.title} deleted'),
+            content: Text('$deletedTask.title deleted'),
             behavior: SnackBarBehavior.floating,
             action: SnackBarAction(
               label: 'Undo',
@@ -85,7 +128,7 @@ class TaskCard extends StatelessWidget {
           await provider.deleteTask(deletedTask.id);
         } catch (e) {
           messenger.showSnackBar(
-            SnackBar(content: Text('Failed to delete ${deletedTask.title}')),
+            SnackBar(content: Text('Failed to delete $deletedTask.title')),
           );
         }
       },
@@ -115,7 +158,7 @@ class TaskCard extends StatelessWidget {
                 // Checkbox
                 GestureDetector(
                   onTap: () =>
-                      context.read<TaskProvider>().toggleTaskStatus(task.id),
+                      context.read<TaskProvider>().toggleTaskStatus(widget.task.id),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 24,
@@ -144,7 +187,7 @@ class TaskCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        task.title,
+                        _title,
                         style: theme.textTheme.titleMedium?.copyWith(
                           decoration:
                               isDone ? TextDecoration.lineThrough : null,
@@ -164,7 +207,7 @@ class TaskCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              '${task.category.emoji} ${task.category.label}',
+                              '${_category.emoji} ${_category.label}',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -174,10 +217,10 @@ class TaskCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (task.description.isNotEmpty) ...[
+                      if (_description.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Text(
-                          task.description,
+                          _description,
                           style: theme.textTheme.bodyMedium,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -186,16 +229,16 @@ class TaskCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          if (task.startTime != null) ...[
+                          if (_startTime != null) ...[
                             _TimeBadge(
                               icon: Icons.play_circle_outline_rounded,
                               label: DateFormat('h:mm a')
-                                  .format(task.startTime!),
+                                  .format(_startTime!),
                               color: colorScheme.primary,
                             ),
                             const SizedBox(width: 8),
                           ],
-                          if (task.deadline != null) ...[
+                          if (_deadline != null) ...[
                             _TimeBadge(
                               icon: Icons.flag_outlined,
                               label: _deadlineLabel(),
@@ -219,22 +262,21 @@ class TaskCard extends StatelessWidget {
   }
 
   String _deadlineLabel() {
-    if (task.deadline == null) return '';
+    if (_deadline == null) return '';
     final now = DateTime.now();
-    final diff = task.deadline!.difference(now);
+    final diff = _deadline!.difference(now);
     if (diff.isNegative) return 'Overdue';
     if (diff.inHours < 1) return 'Due in ${diff.inMinutes}m';
     if (diff.inHours < 24) return 'Due in ${diff.inHours}h';
-    return DateFormat('MMM d, h:mm a').format(task.deadline!);
+    return DateFormat('MMM d, h:mm a').format(_deadline!);
   }
 
   Color _deadlineColor() {
-    if (task.deadline == null) return Colors.grey;
+    if (_deadline == null) return Colors.grey;
     final now = DateTime.now();
-    final diff = task.deadline!.difference(now);
+    final diff = _deadline!.difference(now);
     if (diff.isNegative) return Colors.red;
     if (diff.inHours < 2) return Colors.orange;
-    // Distant deadlines should not be red
     return Colors.green.withValues(alpha: 0.7);
   }
 
@@ -247,8 +289,8 @@ class TaskCard extends StatelessWidget {
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (_) => TaskFormSheet(
-        selectedDay: selectedDay,
-        existingTask: task,
+        selectedDay: widget.selectedDay,
+        existingTask: widget.task,
       ),
     );
   }
