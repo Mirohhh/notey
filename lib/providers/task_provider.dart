@@ -5,9 +5,7 @@ import '../models/task.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
 import 'package:intl/intl.dart';
-
-// HomeWidget is only available on mobile platforms
-import 'package:home_widget/home_widget.dart' if (dart.library.html) 'package:home_widget/home_widget.dart';
+import '../web_stub/home_web_stub.dart' if (dart.library.html) '../web_stub/home_web_stub.dart';
 
 class TaskProvider extends ChangeNotifier {
   final DatabaseService _db;

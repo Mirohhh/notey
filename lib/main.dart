@@ -8,7 +8,7 @@ import 'screens/home_screen.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
 // HomeWidget is only available on mobile platforms
-import 'package:home_widget/home_widget.dart' if (dart.library.html) 'package:home_widget/home_widget.dart';
+import 'web_stub/home_web_stub.dart' if (dart.library.html) 'web_stub/home_web_stub.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

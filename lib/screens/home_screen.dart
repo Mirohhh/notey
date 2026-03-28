@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: Colors.black.withOpacity(0.04),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   shape: BoxShape.circle,
                 ),
                 todayDecoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.2),
+                  color: colorScheme.primary.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 todayTextStyle: TextStyle(
@@ -145,14 +145,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   shape: BoxShape.circle,
                 ),
                 weekendTextStyle:
-                    TextStyle(color: colorScheme.primary.withValues(alpha: 0.7)),
+                    TextStyle(color: colorScheme.primary.withOpacity(0.7)),
                 defaultTextStyle:
                     TextStyle(color: theme.textTheme.bodyMedium?.color),
               ),
               headerStyle: HeaderStyle(
                 formatButtonDecoration: BoxDecoration(
                   border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.4),
+                    color: colorScheme.primary.withOpacity(0.4),
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -177,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   fontWeight: FontWeight.w600,
                 ),
                 weekendStyle: TextStyle(
-                  color: colorScheme.primary.withValues(alpha: 0.6),
+                  color: colorScheme.primary.withOpacity(0.6),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -312,7 +312,7 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? colorScheme.primary
-              : colorScheme.primary.withValues(alpha: 0.08),
+              : colorScheme.primary.withOpacity(0.08),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
@@ -347,7 +347,7 @@ class _TaskCountBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withValues(alpha: 0.1),
+        color: colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
@@ -378,13 +378,13 @@ class _EmptyState extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              color: theme.colorScheme.primary.withOpacity(0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.check_circle_outline_rounded,
               size: 40,
-              color: theme.colorScheme.primary.withValues(alpha: 0.5),
+              color: theme.colorScheme.primary.withOpacity(0.5),
             ),
           ),
           const SizedBox(height: 16),
