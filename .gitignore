@@ -1,9 +1,9 @@
-```
 # Compiled and build artifacts
 *.pyc
 __pycache__/
 *.o
 *.obj
+*.class
 *.exe
 *.dll
 *.so
@@ -14,8 +14,6 @@ __pycache__/
 .venv/
 venv/
 node_modules/
-.mypy_cache/
-.pytest_cache/
 dist/
 build/
 target/
@@ -30,7 +28,7 @@ target/
 # Environment
 .env
 .env.local
-*.env.*
+.env.*
 
 # Editors
 .vscode/
@@ -44,6 +42,10 @@ Thumbs.db
 coverage/
 htmlcov/
 .coverage
+
+# Python specific
+.mypy_cache/
+.pytest_cache/
 
 # Compressed files
 *.zip
@@ -68,4 +70,3 @@ htmlcov/
 *.tar.bz2
 *.tar.xz
 *.tar.zst
-```
