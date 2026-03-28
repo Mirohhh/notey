@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../models/task.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
-import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
+
+// HomeWidget is only available on mobile platforms
+import 'package:home_widget/home_widget.dart' if (dart.library.html) 'package:home_widget/home_widget.dart';
 
 class TaskProvider extends ChangeNotifier {
   final DatabaseService _db;
@@ -226,10 +229,13 @@ class TaskProvider extends ChangeNotifier {
       }).join("\n");
     }
 
-    await HomeWidget.saveWidgetData<String>('tasks_data', widgetText);
-    await HomeWidget.updateWidget(
-      name: 'TaskWidgetProvider',
-      iOSName: 'TaskWidget',
-    );
+    // HomeWidget is not supported on web
+    if (!kIsWeb) {
+      await HomeWidget.saveWidgetData<String>('tasks_data', widgetText);
+      await HomeWidget.updateWidget(
+        name: 'TaskWidgetProvider',
+        iOSName: 'TaskWidget',
+      );
+    }
   }
 }
