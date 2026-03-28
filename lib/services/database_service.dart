@@ -8,7 +8,7 @@ class DatabaseService {
   DatabaseService._internal();
 
   static const _boxName = 'tasks';
-  late Box<Map> _box;
+  late Box<dynamic> _box;
 
   // In-memory index for faster lookups: dateKey -> list of task IDs
   final Map<String, Set<String>> _dateIndex = {};
@@ -22,8 +22,10 @@ class DatabaseService {
 
   void _buildIndex() {
     _dateIndex.clear();
-    for (final entry in _box.entries) {
-      final map = Map<String, dynamic>.from(entry.value as Map);
+    for (final key in _box.keys) {
+      final raw = _box.get(key);
+      if (raw == null) continue;
+      final map = Map<String, dynamic>.from(raw as Map);
       final dateStr = map['date'] as String?;
       if (dateStr == null) continue;
       
@@ -31,12 +33,12 @@ class DatabaseService {
       try {
         dt = DateTime.parse(dateStr);
       } catch (e) {
-        debugPrint('Failed to parse date for task ${entry.key}: $dateStr - $e');
+        debugPrint('Failed to parse date for task $key: $dateStr - $e');
         continue;
       }
       
-      final key = _dateKey(dt);
-      _dateIndex.putIfAbsent(key, () => {}).add(entry.key as String);
+      final keyDate = _dateKey(dt);
+      _dateIndex.putIfAbsent(keyDate, () => {}).add(key as String);
     }
     _indexBuilt = true;
   }
@@ -148,16 +150,20 @@ class DatabaseService {
           .cast<Task>();
     } else {
       // Fallback to full scan if index not built or no tasks for day
-      tasks = _box.values
-          .where((raw) {
-            try {
-              final t = Task.fromJson(Map<String, dynamic>.from(raw));
-              return _dateKey(t.date) == dayKey;
-            } catch (e) {
-              debugPrint('Failed to parse task in fallback scan: $e');
-              return false;
-            }
-          });
+      final dayTasks = <Task>[];
+      for (final key in _box.keys) {
+        final raw = _box.get(key);
+        if (raw == null) continue;
+        try {
+          final t = Task.fromJson(Map<String, dynamic>.from(raw as Map));
+          if (_dateKey(t.date) == dayKey) {
+            dayTasks.add(t);
+          }
+        } catch (e) {
+          debugPrint('Failed to parse task in fallback scan: $e');
+        }
+      }
+      tasks = dayTasks;
     }
 
     // Apply category filter
@@ -202,15 +208,17 @@ class DatabaseService {
       }
     } else {
       // Fallback to full scan
-      for (final raw in _box.values) {
-        final map = Map<String, dynamic>.from(raw);
+      for (final key in _box.keys) {
+        final raw = _box.get(key);
+        if (raw == null) continue;
+        final map = Map<String, dynamic>.from(raw as Map);
         final dateStr = map['date'] as String?;
         if (dateStr == null) continue;
         try {
           final dt = DateTime.parse(dateStr);
           if (dt.year == year && dt.month == month) {
-            final key = DateTime(dt.year, dt.month, dt.day);
-            counts[key] = (counts[key] ?? 0) + 1;
+            final keyDate = DateTime(dt.year, dt.month, dt.day);
+            counts[keyDate] = (counts[keyDate] ?? 0) + 1;
           }
         } catch (e) {
           debugPrint('Failed to parse date in getTaskCountsByMonth: $dateStr - $e');
@@ -224,9 +232,11 @@ class DatabaseService {
   /// All tasks — used for notification rescheduling on boot.
   Future<List<Task>> getAllTasks() async {
     final tasks = <Task>[];
-    for (final raw in _box.values) {
+    for (final key in _box.keys) {
+      final raw = _box.get(key);
+      if (raw == null) continue;
       try {
-        final task = Task.fromJson(Map<String, dynamic>.from(raw));
+        final task = Task.fromJson(Map<String, dynamic>.from(raw as Map));
         tasks.add(task);
       } catch (e) {
         debugPrint('Failed to parse task in getAllTasks: $e');
