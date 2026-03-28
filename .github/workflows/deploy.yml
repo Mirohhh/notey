@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main
+      - github-action-deployment-guide-6719a
   workflow_dispatch:
 
 permissions:
