@@ -16,8 +16,13 @@ class DatabaseService {
 
   /// Call once before using any other method.
   Future<void> init() async {
-    _box = await Hive.openBox<Map>(_boxName);
-    _buildIndex();
+    try {
+      _box = await Hive.openBox<dynamic>(_boxName);
+      _buildIndex();
+    } catch (e) {
+      debugPrint('Error initializing Hive box: $e');
+      rethrow;
+    }
   }
 
   void _buildIndex() {

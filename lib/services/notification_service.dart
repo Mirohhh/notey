@@ -1,6 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:flutter/foundation.dart';
 import '../models/task.dart';
 
 class NotificationService {
@@ -12,6 +13,12 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
+    // Notifications are not supported on web
+    if (kIsWeb) {
+      debugPrint('Notifications not supported on web');
+      return;
+    }
+    
     tz.initializeTimeZones();
 
     const androidSettings =
@@ -42,6 +49,9 @@ class NotificationService {
   }
 
   Future<void> scheduleTaskNotifications(Task task) async {
+    // Notifications are not supported on web
+    if (kIsWeb) return;
+    
     await cancelTaskNotifications(task.id);
 
     if (task.startTime != null && task.notifyOnStart) {
@@ -118,6 +128,9 @@ class NotificationService {
   }
 
   Future<void> cancelTaskNotifications(String taskId) async {
+    // Notifications are not supported on web
+    if (kIsWeb) return;
+    
     await _notifications.cancel(taskId.hashCode & 0x7FFFFFFF);
     await _notifications.cancel((taskId.hashCode + 1) & 0x7FFFFFFF);
     await _notifications.cancel((taskId.hashCode + 2) & 0x7FFFFFFF);
