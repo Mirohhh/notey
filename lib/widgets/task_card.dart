@@ -80,7 +80,7 @@ class _TaskCardState extends State<TaskCard> {
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         decoration: BoxDecoration(
-          color: Colors.red.withValues(alpha: 0.15),
+          color: Colors.red.withOpacity(0.15),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(Icons.delete_outline_rounded, color: Colors.red),
@@ -144,7 +144,7 @@ class _TaskCardState extends State<TaskCard> {
             ),
             boxShadow: [
               BoxShadow(
-                color: priorityColor.withValues(alpha: 0.05),
+                color: priorityColor.withOpacity(0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -170,7 +170,7 @@ class _TaskCardState extends State<TaskCard> {
                       border: Border.all(
                         color: isDone
                             ? colorScheme.primary
-                            : colorScheme.onSurface.withValues(alpha: 0.3),
+                            : colorScheme.onSurface.withOpacity(0.3),
                         width: 2,
                       ),
                     ),
@@ -203,7 +203,7 @@ class _TaskCardState extends State<TaskCard> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              color: colorScheme.primary.withValues(alpha: 0.08),
+                              color: colorScheme.primary.withOpacity(0.08),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -252,7 +252,7 @@ class _TaskCardState extends State<TaskCard> {
                 ),
                 // Edit icon
                 Icon(Icons.chevron_right_rounded,
-                    color: colorScheme.onSurface.withValues(alpha: 0.3)),
+                    color: colorScheme.onSurface.withOpacity(0.3)),
               ],
             ),
           ),
@@ -277,7 +277,7 @@ class _TaskCardState extends State<TaskCard> {
     final diff = _deadline!.difference(now);
     if (diff.isNegative) return Colors.red;
     if (diff.inHours < 2) return Colors.orange;
-    return Colors.green.withValues(alpha: 0.7);
+    return Colors.green.withOpacity(0.7);
   }
 
   void _showEditSheet(BuildContext context) {
@@ -312,7 +312,7 @@ class _TimeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(

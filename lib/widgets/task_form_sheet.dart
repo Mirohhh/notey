@@ -174,7 +174,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: colorScheme.onSurface.withValues(alpha: 0.2),
+                  color: colorScheme.onSurface.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -234,7 +234,7 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
                           color: selected
-                              ? colors[p.index].withValues(alpha: 0.15)
+                              ? colors[p.index].withOpacity(0.15)
                               : colorScheme.surface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
@@ -291,13 +291,13 @@ class _TaskFormSheetState extends State<TaskFormSheet> {
                         horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: selected
-                          ? colorScheme.primary.withValues(alpha: 0.12)
+                          ? colorScheme.primary.withOpacity(0.12)
                           : colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: selected
                             ? colorScheme.primary
-                            : colorScheme.onSurface.withValues(alpha: 0.1),
+                            : colorScheme.onSurface.withOpacity(0.1),
                         width: selected ? 2 : 1,
                       ),
                     ),
@@ -456,11 +456,11 @@ class _TimePickerButton extends StatelessWidget {
             const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
           color: hasTime
-              ? color.withValues(alpha: 0.08)
+              ? color.withOpacity(0.08)
               : theme.inputDecorationTheme.fillColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: hasTime ? color.withValues(alpha: 0.4) : Colors.transparent,
+            color: hasTime ? color.withOpacity(0.4) : Colors.transparent,
           ),
         ),
         child: Row(

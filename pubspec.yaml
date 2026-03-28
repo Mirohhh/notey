@@ -31,12 +31,12 @@ flutter:
   fonts:
     - family: NotoSans
       fonts:
-        - asset: fonts\NotoSans-VariableFont_wdth,wght.ttf
-        - asset: fonts\NotoSans-Italic-VariableFont_wdth,wght.ttf
+        - asset: fonts/NotoSans-VariableFont_wdth,wght.ttf
+        - asset: fonts/NotoSans-Italic-VariableFont_wdth,wght.ttf
           style: italic
     - family: NotoSerif
       fonts:
-        - asset: fonts\NotoSerif-VariableFont_wdth,wght.ttf
-        - asset: fonts\NotoSerif-Italic-VariableFont_wdth,wght.ttf
+        - asset: fonts/NotoSerif-VariableFont_wdth,wght.ttf
+        - asset: fonts/NotoSerif-Italic-VariableFont_wdth,wght.ttf
           style: italic
   uses-material-design: true
